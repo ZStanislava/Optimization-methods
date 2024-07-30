@@ -1,0 +1,75 @@
+
+#include <iostream>
+#include <deque>
+#include <iomanip>
+using namespace std;
+
+double f_x1(deque<double> x) {
+	return 2 * x[0] - 8;
+}
+double f_x2(deque<double> x) {
+	return 2 * x[1] + 4;
+}
+double f(deque<double> x) {
+	return x[0] * x[0] + x[1] * x[1] - 8 * x[0] + 4 * x[1];
+}
+double norm(deque<double> x) {
+	return sqrt(x[0] * x[0] + x[1] * x[1]);
+}
+deque<double> diff(deque<double> x, deque<double> y) {
+	return deque<double>{x[0] - y[0], x[1] - y[1]};
+}
+deque<double> P(deque<double> x) {
+	deque<double> OX = { x[0] - 1, x[1]- 1};
+	return deque<double> {
+		1 + (x[0] - 1) * 1 / norm(OX),
+	    1 + (x[1] - 1) * 1 / norm(OX),
+	};
+}
+deque<double> mult(deque<double>x, double p) {
+	return deque<double>{x[0] * p, x[1] * p};
+}
+deque<double> grad(deque<double> x) {
+	return deque<double>{ f_x1(x), f_x2(x) };
+}
+
+int main() {
+	setlocale(LC_ALL, "");
+	double alpha = 0.5, sigma = 0.5;
+
+	deque<double> x = deque<double>(2);
+	deque<double> d = deque<double>(2);
+	cout << "Введите x" << endl;
+	cin >> x[0] >> x[1];
+	cout << "Введите d для проверки проекции" << endl;
+	cin >> d[0] >>d[1];
+	cout << "Введите порядок точности" << endl;
+	int p;
+	cin >> p;
+	double eps = pow(10, -p);
+	deque<double> z;
+	int iter = 0;
+	deque<double> dz;
+	dz = P(d);
+	cout << "dz = (" << dz[0] << "; " << dz[1] << ")" << endl;
+	
+	do { //выход из цикла если хоть одно из условий сломалось
+		double s = 1;
+		iter++;
+
+		do {
+			z = P(diff(x, mult(grad(x), s))); //проекция
+			s *= alpha; 
+		} while (f(x) - f(z) < sigma * pow(norm(diff(x, z)), 2)); //выходим из цикла когда получаем нужное значение
+		 // s уд. ус. f(x) - f(z) >= sigma * pow(norm(diff(x, z)), 2)                     //пока не получили ищем s
+		if (norm(diff(x, z)) < eps) break; // если |z-x|>e и ...x=z
+		x = z;
+
+	} while (norm(grad(x)) > eps); // и если производная|f'(x)|>e x=z
+
+	cout << "iteration: " << iter << endl;
+	cout << fixed << setprecision(p);
+	cout << "z = (" << z[0] << "; " << z[1] << ";"<< endl;
+	cout << "|f'(x)| = " << norm(grad(x)) << endl;
+	cout << "|x - z| = " << norm(diff(x, z)) << endl;
+}

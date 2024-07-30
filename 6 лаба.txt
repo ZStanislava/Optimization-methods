@@ -1,0 +1,93 @@
+
+#include <iostream>
+#include <locale.h>
+using namespace std;
+
+double fl_x1(double x1, double x2) {
+    return 2 * x1 - 8;
+}
+
+double fl_x2(double x1, double x2) {
+    return 2 * x2 + 4;
+}
+
+double f(double x1, double x2) {
+    return x1 * x1 + x2 * x2 - 8 * x1 + 4 * x2;
+}
+
+double norm(double x1, double x2) {
+    return sqrt(x1 * x1 + x2 * x2);
+}
+
+double getS(double x1_k, double x2_k, double y1_k, double y2_k, double epsilon) { //для нахождения s
+    double a = 0, b = 1;
+
+    double x1_a = x1_k + a * (y1_k - x1_k);
+    double x2_a = x2_k + a * (y2_k - x2_k);
+
+    double delta = (b - a) * (3 - sqrt(5)) / 2; // золотое сечение
+    double x = a + delta;
+    double y = b - delta;
+
+    double x1_x = x1_k + x * (y1_k - x1_k);
+    double x2_x = x2_k + x * (y2_k - x2_k);
+    double x1_y = x1_k + y * (y1_k - x1_k);
+    double x2_y = x2_k + y * (y2_k - x2_k);
+
+    while (b - a > epsilon * 2) {
+        if (f(x1_x, x2_x) < f(x1_y, x2_y)) {
+            b = y;
+            y = x;
+            x = a + b - y;
+        }
+        else {
+            a = x;
+            x = y;
+            y = a + b - x;
+        }
+        x1_x = x1_k + x * (y1_k - x1_k);
+        x2_x = x2_k + x * (y2_k - x2_k);
+        x1_y = x1_k + y * (y1_k - x1_k);
+        x2_y = x2_k + y * (y2_k - x2_k);
+    }
+    return (b + a) / 2;
+}
+
+int main() {
+    setlocale(LC_ALL, "Russian");
+    double epsilon = 0.0000001;
+
+    // для рассчёта количества нулей после запятой у точности для правильного вывода
+    int n = 0;
+    double eps = epsilon;
+    while (eps < 1) {
+        n++;
+        eps *= 10;
+    }
+
+    double x1, x2;
+    cout << "Введите x1:" << endl;
+    cin >> x1;
+    cout << "Введите x2:" << endl;
+    cin >> x2;
+
+    double y1 = 1 - (fl_x1(x1, x2) * 1) / norm(fl_x1(x1, x2), fl_x2(x1, x2));
+    double y2 = 1 - (fl_x2(x1, x2) * 1) / norm(fl_x1(x1, x2), fl_x2(x1, x2));
+
+    int i = 0;
+    while ((fl_x1(x1, x2) * (y1 - x1) + fl_x2(x1, x2) * (y2 - x2)) < -epsilon) { // если f'>e -условие выхода
+        i++;
+        double s = getS(x1, x2, y1, y2, epsilon);
+        x1 = x1 + s * (y1 - x1); // алгоритм
+        x2 = x2 + s * (y2 - x2);
+        y1 = 1 - (fl_x1(x1, x2) * 1) / norm(fl_x1(x1, x2), fl_x2(x1, x2)); //фомула для области
+        y2 = 1 - (fl_x2(x1, x2) * 1) / norm(fl_x1(x1, x2), fl_x2(x1, x2));
+    }
+
+    cout << endl << endl << "Количество итераций: " << i << endl;
+    cout << "Точность: " << epsilon << endl;
+    cout << "x = (" << round(x1 * pow(10, n)) / (pow(10, n)) << "; " << round(x2 * pow(10, n)) / (pow(10, n)) << ")" << endl;
+    cout << "y = (" << round(y1 * pow(10, n)) / (pow(10, n)) << "; " << round(y2 * pow(10, n)) / (pow(10, n)) << ")" << endl;
+    cout << "f(x) = " << round(f(x1, x2)) * pow(10, n) / (pow(10, n)) << endl;
+    cout << "f'_x1(x1,x2)*(y1-x1)+f'_x2(x1,x2)*(y2-x2)=" << round((fl_x1(x1, x2) * (y1 - x1) + fl_x2(x1, x2) * (y2 - x2)) * pow(10, n)) / (pow(10, n)) << endl;
+}
